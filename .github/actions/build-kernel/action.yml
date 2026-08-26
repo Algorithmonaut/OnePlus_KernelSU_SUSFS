@@ -855,6 +855,8 @@ runs:
         }
         
         retry_clone "https://github.com/WildKernels/kernel_patches.git" "main" "1"
+        git -C kernel_patches fetch --depth=1 origin f569cc9e69d6f03a488c391db4cc00db8ead7a59
+        git -C kernel_patches checkout --detach FETCH_HEAD
         
         if [ "${{ env.OP_SUSFS }}" = true ]; then
           echo "Using SUSFS branch/commit: $SUSFS_BRANCH"
@@ -1642,7 +1644,11 @@ runs:
         if [[ "$KERNEL_VERSION" == "6.12" ]] || [[ "$OP_BRANCH" == wild/mt* ]]; then
           echo "::debug::Skipping CONFIG_BPF_STREAM_PARSER for $KERNEL_VERSION / $OP_BRANCH"
         else
-          echo "CONFIG_BPF_STREAM_PARSER=y" >> "$COMMON_KERNEL_FOLDER/arch/arm64/configs/gki_defconfig"
+          sed -i \
+            -e '/^CONFIG_BPF_STREAM_PARSER=/d' \
+            -e '/^# CONFIG_BPF_STREAM_PARSER is not set$/d' \
+            "$COMMON_KERNEL_FOLDER/arch/arm64/configs/gki_defconfig"
+          echo "# CONFIG_BPF_STREAM_PARSER is not set" >> "$COMMON_KERNEL_FOLDER/arch/arm64/configs/gki_defconfig"
         fi
         
         cat >> "$COMMON_KERNEL_FOLDER/arch/arm64/configs/gki_defconfig" <<EOF
